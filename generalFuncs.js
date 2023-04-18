@@ -8,6 +8,7 @@ const vscode = require('vscode');
 async function runForInsert(connection, query) {
     let allowIdentity = vscode.workspace.getConfiguration('LzScripts').get('addIdentityColumns') === true;
     let allowMultipleInsert = vscode.workspace.getConfiguration('LzScripts').get('allowInsertPerRow') === true;
+    let columnsToIgnore = vscode.workspace.getConfiguration('LzScripts').get('columnsToIgnore').split(',');
     let insetStr = [];
 
     let tableFull = getTableName(query).replaceAll(';','');
@@ -33,7 +34,7 @@ async function runForInsert(connection, query) {
 
     //--> get cols except identity , autogen cols
     for (let i = 0; i < data.columnInfo.length; i++) {
-        if (data.columnInfo[i].isIdentity === true && !allowIdentity)
+        if ((data.columnInfo[i].isIdentity === true && !allowIdentity) || (columnsToIgnore.includes(data.columnInfo[i].columnName)))
             continue;
 
         if (data.columnInfo[i].dataTypeName !== 'timestamp')
@@ -49,7 +50,7 @@ async function runForInsert(connection, query) {
             let dataStr = 'values ('
             for (let col = 0; col < data.columnInfo.length; col++) {
 
-                if (data.columnInfo[col].isIdentity === true && !allowIdentity)
+                if ((data.columnInfo[col].isIdentity === true && !allowIdentity) || (columnsToIgnore.includes(data.columnInfo[col].columnName)))
                     continue;
 
                 if (data.columnInfo[col].dataTypeName !== 'timestamp')
@@ -71,7 +72,7 @@ async function runForInsert(connection, query) {
             dataStr += '( '
             for (let col = 0; col < data.columnInfo.length; col++) {
 
-                if (data.columnInfo[col].isIdentity === true && !allowIdentity)
+                if ((data.columnInfo[col].isIdentity === true && !allowIdentity) || (columnsToIgnore.includes(data.columnInfo[col].columnName)))
                     continue;
 
                 if (data.columnInfo[col].dataTypeName !== 'timestamp')
